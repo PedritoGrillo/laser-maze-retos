@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laser Maze · Retos de nivel medio</title>
+<meta name="description" content="12 retos inventados de nivel medio para Laser Maze, con solución única comprobada por ordenador.">
+<meta name="theme-color" content="#0b0d12">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b0d12'/%3E%3Cpath d='M5 26 L16 15 L27 26' stroke='%23ff2a1f' stroke-width='3' fill='none'/%3E%3Ccircle cx='16' cy='15' r='3.5' fill='%23ff8a80'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@400;600;800&display=swap">
+<style>
+  :root {
+    --fondo: #0b0d12; --panel: #141821; --linea: #252b37; --texto: #e9edf3; --suave: #9aa3b2;
+    --laser: #ff2a1f; --laser-suave: rgba(255, 42, 31, .35); --naranja: #ff8a00; --verde: #3ddc84;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; color: var(--texto); background: var(--fondo);
+    font: 15px/1.5 Inter, system-ui, "Segoe UI", Roboto, sans-serif;
+    background-image:
+      radial-gradient(1200px 500px at 50% -120px, rgba(255, 42, 31, .16), transparent 70%),
+      linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+    background-size: auto, 40px 40px, 40px 40px;
+  }
+  a { color: #ff8a80; }
+
+  /* ---------- Cabecera ---------- */
+  .heroe { position: relative; overflow: hidden; padding: 56px 16px 34px; text-align: center; }
+  .heroe svg.haz { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .haz .rayo-h { stroke: var(--laser); stroke-width: 2.5; fill: none; filter: url(#brillo);
+    stroke-dasharray: 2400; stroke-dashoffset: 2400; animation: traza 3.2s ease-out .3s forwards; }
+  .haz .espejo { stroke: #c9d2de; stroke-width: 4; stroke-linecap: round; opacity: .8; }
+  .haz .diana { fill: var(--laser); opacity: 0; animation: enciende .6s ease-out 3.2s forwards; filter: url(#brillo); }
+  @keyframes traza { to { stroke-dashoffset: 0; } }
+  @keyframes enciende { to { opacity: 1; } }
+  .heroe .etiqueta { position: relative; display: inline-block; font-weight: 800; font-size: 12px; letter-spacing: .22em;
+    color: var(--naranja); border: 1px solid rgba(255,138,0,.4); border-radius: 999px; padding: 4px 12px; }
+  .heroe h1 { position: relative; margin: 16px 0 8px; font-family: Orbitron, Inter, sans-serif; font-weight: 900;
+    font-size: clamp(34px, 7vw, 68px); line-height: 1; letter-spacing: .04em;
+    text-shadow: 0 0 22px var(--laser-suave), 0 0 2px #fff; }
+  .heroe h1 span { color: var(--laser); }
+  .heroe p { position: relative; max-width: 640px; margin: 0 auto; color: var(--suave); }
+  .heroe .datos { position: relative; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+  .chip { background: var(--panel); border: 1px solid var(--linea); border-radius: 12px; padding: 8px 14px; font-size: 13px; color: var(--suave); }
+  .chip b { color: var(--texto); font-size: 18px; display: block; line-height: 1.1; }
+
+  /* ---------- Barra ---------- */
+  .barra { position: sticky; top: 0; z-index: 5; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+    padding: 10px 16px; background: rgba(11,13,18,.82); backdrop-filter: blur(10px); border-bottom: 1px solid var(--linea); }
+  button { font: inherit; font-weight: 600; color: var(--texto); background: var(--panel); border: 1px solid var(--linea);
+    border-radius: 10px; padding: 8px 14px; cursor: pointer; transition: border-color .15s, transform .1s, background .15s; }
+  button:hover { border-color: #46506a; }
+  button:active { transform: scale(.97); }
+  button.primario { background: linear-gradient(180deg, #ff4136, #d81b10); border-color: #ff5a50; box-shadow: 0 0 18px var(--laser-suave); }
+
+  /* ---------- Reglas ---------- */
+  .reglas { max-width: 980px; margin: 22px auto 0; padding: 0 16px; }
+  details { background: var(--panel); border: 1px solid var(--linea); border-radius: 16px; padding: 4px 18px; }
+  summary { cursor: pointer; font-weight: 800; padding: 10px 0; list-style: none; }
+  summary::before { content: "▸ "; color: var(--laser); }
+  details[open] summary::before { content: "▾ "; }
+  .reglas ul { margin: 4px 0 12px; padding-left: 20px; color: #cfd6e0; }
+  .piezas { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; margin: 6px 0 16px; }
+  .pieza { display: grid; grid-template-columns: 54px 1fr; gap: 12px; align-items: center; background: #0f131a;
+    border: 1px solid var(--linea); border-radius: 12px; padding: 8px 10px; font-size: 13.5px; color: #cfd6e0; }
+  .pieza b { color: var(--texto); }
+
+  /* ---------- Tarjetas ---------- */
+  main { max-width: 1180px; margin: 0 auto; padding: 26px 16px 50px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 26px; justify-items: center; }
+  .carta { width: 300px; height: 452px; perspective: 1400px; }
+  .interior { position: relative; width: 100%; height: 100%; transition: transform .8s cubic-bezier(.2,.8,.2,1); transform-style: preserve-3d; }
+  .carta.girada .interior { transform: rotateY(180deg); }
+  .cara { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    border-radius: 18px; overflow: hidden; background: #fbfbfc; color: #1d1f24;
+    box-shadow: 0 14px 40px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.06); display: flex; flex-direction: column; }
+  .trasera { transform: rotateY(180deg); background: #11151c; color: var(--texto); }
+  .cab { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; color: #fff;
+    background: linear-gradient(135deg, #ff9a1a, #ff6a00); }
+  .trasera .cab { background: linear-gradient(135deg, #2b313d, #1a1f28); border-bottom: 1px solid var(--linea); }
+  .cab .marca { font-family: Orbitron, Inter, sans-serif; font-weight: 900; letter-spacing: .06em; font-size: 15px; }
+  .cab .nivel { font-size: 10.5px; font-weight: 800; letter-spacing: .14em; opacity: .95; }
+  .cab .num { background: #fff; color: #ff6a00; font-family: Orbitron, Inter, sans-serif; font-weight: 900; border-radius: 999px;
+    min-width: 38px; text-align: center; padding: 3px 9px; font-size: 16px; }
+  .trasera .cab .num { color: #1a1f28; }
+  .carta.hecha .delantera .cab::after { content: "✓ RESUELTO"; position: absolute; top: 46px; right: -34px; transform: rotate(35deg);
+    background: var(--verde); color: #08311a; font-size: 10px; font-weight: 900; letter-spacing: .1em; padding: 3px 40px; }
+  svg.tablero { display: block; margin: 12px auto 6px; }
+  .pie { display: flex; justify-content: space-between; gap: 8px; padding: 4px 14px 0; }
+  .caja { border: 2px solid #1d1f24; border-radius: 10px; padding: 4px 8px 6px; }
+  .caja .tit { font-size: 9.5px; font-weight: 800; letter-spacing: .06em; }
+  .caja .fichas { display: flex; gap: 4px; margin-top: 3px; }
+  .caja.obj { text-align: center; min-width: 78px; }
+  .caja.obj b { font-family: Orbitron, Inter, sans-serif; font-size: 28px; line-height: 1.1; display: block; }
+  .acciones { display: flex; gap: 8px; padding: 10px 14px 14px; margin-top: auto; }
+  .acciones button { flex: 1; padding: 7px 8px; font-size: 13px; }
+  .delantera .acciones button { background: #eef0f3; color: #1d1f24; border-color: #d5d9df; }
+  .delantera .acciones button.ver { background: #1d1f24; color: #fff; border-color: #1d1f24; }
+  .carta.hecha .delantera .acciones button.hecho { background: var(--verde); border-color: var(--verde); color: #08311a; }
+  .nota { font-size: 12.5px; color: var(--suave); padding: 0 16px; text-align: center; }
+  .trasera svg.tablero rect.fondo { fill: #1b212b; }
+  /* rayo de la solución: se dibuja tramo a tramo al girar */
+  .rayo line { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .carta.girada .rayo line { animation: traza-tramo .16s linear forwards; animation-delay: calc(.75s + var(--n) * .12s); }
+  @keyframes traza-tramo { to { stroke-dashoffset: 0; } }
+  .diana-on { opacity: 0; }
+  .carta.girada .diana-on { animation: enciende .4s ease-out forwards; animation-delay: calc(.9s + var(--n) * .12s); }
+
+  footer { text-align: center; color: #6c7586; font-size: 12.5px; padding: 10px 16px 40px; }
+  .oculta-sol .carta .ver { display: none; }
+
+  /* ---------- Impresión: reto y solución lado a lado ---------- */
+  @media print {
+    body { background: #fff; color: #000; }
+    .heroe svg.haz, .barra, .reglas, footer, .acciones { display: none; }
+    .heroe { padding: 10px; } .heroe h1 { text-shadow: none; color: #000; } .heroe p, .chip { color: #333; }
+    main { display: block; padding: 0; }
+    .carta { width: auto; height: auto; perspective: none; break-inside: avoid; page-break-inside: avoid; margin: 0 0 10mm; }
+    .interior { transform: none !important; display: flex; gap: 8mm; justify-content: center; }
+    .cara { position: relative; width: 300px; height: 410px; backface-visibility: visible; transform: none; box-shadow: none; border: 1px solid #999; }
+    .trasera { background: #fff; color: #000; }
+    .rayo line { stroke-dashoffset: 0 !important; animation: none !important; }
+    .diana-on { opacity: 1 !important; animation: none !important; }
+    .oculta-sol .trasera { display: none; }
+  }
+</style>
+</head>
+<body>
+<header class="heroe">
+  <svg class="haz" viewBox="0 0 1200 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs><filter id="brillo" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+    <path class="rayo-h" d="M -20 300 L 180 300 L 180 70 L 1010 70 L 1010 330 L 1220 330"/>
+    <line class="espejo" x1="160" y1="320" x2="200" y2="280"/>
+    <line class="espejo" x1="160" y1="50" x2="200" y2="90"/>
+    <line class="espejo" x1="990" y1="50" x2="1030" y2="90"/>
+    <line class="espejo" x1="990" y1="350" x2="1030" y2="310"/>
+    <circle class="diana" cx="1180" cy="330" r="9"/>
+  </svg>
+  <div class="etiqueta">RETOS INVENTADOS · NIVEL MEDIO</div>
+  <h1>LASER <span>MAZE</span></h1>
+  <p>Coloca los espejos, divide el haz y enciende los objetivos. 12 retos nuevos con <b>una única solución</b>, comprobada por ordenador.</p>
+  <div class="datos">
+    <div class="chip"><b id="nRetos">12</b>retos</div>
+    <div class="chip"><b>1</b>solución por reto</div>
+    <div class="chip"><b id="nHechos">0</b>resueltos</div>
+  </div>
+</header>
+
+<div class="barra">
+  <button id="btnSol">🙈 Ocultar soluciones</button>
+  <button id="btnGirar">↺ Volver todas al reto</button>
+  <button class="primario" onclick="window.print()">🖨 Imprimir</button>
+</div>
+
+<section class="reglas">
+  <details>
+    <summary>Cómo se juega y qué hace cada pieza</summary>
+    <ul>
+      <li>Pon en el tablero las fichas que muestra la tarjeta, cada una en su casilla. Si llevan <b>?</b>, la casilla es fija, pero tienes que averiguar hacia dónde van giradas.</li>
+      <li>Añade <b>todas</b> las fichas de «Añadir al tablero», donde quieras y giradas como quieras.</li>
+      <li>El láser tiene que encender <b>exactamente</b> el número de objetivos indicado y <b>tocar todas las fichas</b> del tablero (menos el bloqueador).</li>
+      <li>Un objetivo/espejo con <b>?</b> dentro de un círculo rojo tiene que usarse sí o sí como objetivo.</li>
+    </ul>
+    <div class="piezas" id="piezas"></div>
+  </details>
+</section>
+
+<main id="cartas"></main>
+
+<footer>
+  Retos creados por fans para jugar con el tablero de <b>Laser Maze</b>. Laser Maze es una marca de ThinkFun (Ravensburger); esta página no tiene relación con la marca.
+</footer>
+
+<script>
+const RETOS = [{"objetivos":1,"añadir":["TM","BS","TM"],"fijas":[{"i":6,"t":"L","r":1},{"i":8,"t":"DM","r":1},{"i":4,"t":"TM","r":null,"diana":true},{"i":21,"t":"TM","r":0}],"solucion":[{"i":6,"t":"L","r":1},{"i":8,"t":"DM","r":1},{"i":4,"t":"TM","r":0},{"i":21,"t":"TM","r":0},{"i":7,"t":"BS","r":0},{"i":3,"t":"TM","r":1},{"i":22,"t":"TM","r":3}],"rayo":[[1,1,2,1],[2,1,3,1],[3,1,3,0],[3,0,4,0],[2,1,2,2],[2,2,2,3],[2,3,2,4],[2,4,1,4],[1,4,1,3],[1,3,1,2],[1,2,1,1]],"encendidas":[4]},{"objetivos":1,"añadir":["TM","TM"],"fijas":[{"i":12,"t":"L","r":0},{"i":7,"t":"BS","r":null},{"i":5,"t":"CP","r":1},{"i":18,"t":"TM","r":null,"diana":true},{"i":13,"t":"CB","r":0}],"solucion":[{"i":12,"t":"L","r":0},{"i":7,"t":"BS","r":0},{"i":5,"t":"CP","r":1},{"i":18,"t":"TM","r":1},{"i":13,"t":"CB","r":0},{"i":2,"t":"TM","r":1},{"i":3,"t":"TM","r":2}],"rayo":[[2,2,2,1],[2,1,2,0],[2,0,3,0],[3,0,3,1],[3,1,3,2],[3,2,3,3],[2,1,1,1],[1,1,0,1],[0,1,-1,1,"fuera"]],"encendidas":[18]},{"objetivos":1,"añadir":["TM","BS"],"fijas":[{"i":16,"t":"L","r":null},{"i":1,"t":"CP","r":null},{"i":10,"t":"DM","r":1},{"i":15,"t":"CB","r":0},{"i":24,"t":"TM","r":0}],"solucion":[{"i":16,"t":"L","r":0},{"i":1,"t":"CP","r":0},{"i":10,"t":"DM","r":1},{"i":15,"t":"CB","r":0},{"i":24,"t":"TM","r":0},{"i":11,"t":"BS","r":0},{"i":20,"t":"TM","r":0}],"rayo":[[1,3,1,2],[1,2,1,1],[1,1,1,0],[1,0,1,-1,"fuera"],[1,2,0,2],[0,2,0,3],[0,3,0,4],[0,4,1,4],[1,4,2,4],[2,4,3,4],[3,4,4,4]],"encendidas":[24]},{"objetivos":1,"añadir":["DM","BS"],"fijas":[{"i":14,"t":"L","r":null},{"i":10,"t":"TM","r":null},{"i":24,"t":"TM","r":1},{"i":18,"t":"CP","r":0},{"i":11,"t":"BS","r":0}],"solucion":[{"i":14,"t":"L","r":3},{"i":10,"t":"TM","r":2},{"i":24,"t":"TM","r":1},{"i":18,"t":"CP","r":0},{"i":11,"t":"BS","r":0},{"i":13,"t":"BS","r":1},{"i":23,"t":"DM","r":0}],"rayo":[[4,2,3,2],[3,2,2,2],[2,2,1,2],[1,2,0,2],[1,2,1,1],[1,1,1,0],[1,0,1,-1,"fuera"],[3,2,3,3],[3,3,3,4],[3,4,4,4]],"encendidas":[10]},{"objetivos":1,"añadir":["BS","TM"],"fijas":[{"i":13,"t":"L","r":null},{"i":24,"t":"DM","r":null},{"i":14,"t":"CB","r":0},{"i":9,"t":"BS","r":1},{"i":18,"t":"CP","r":0}],"solucion":[{"i":13,"t":"L","r":2},{"i":24,"t":"DM","r":1},{"i":14,"t":"CB","r":0},{"i":9,"t":"BS","r":1},{"i":18,"t":"CP","r":0},{"i":23,"t":"BS","r":0},{"i":4,"t":"TM","r":3}],"rayo":[[3,2,3,3],[3,3,3,4],[3,4,3,5,"fuera"],[3,4,4,4],[4,4,4,3],[4,3,4,2],[4,2,4,1],[4,1,4,0],[4,1,5,1,"fuera"]],"encendidas":[4]},{"objetivos":2,"añadir":["DM","BS"],"fijas":[{"i":14,"t":"L","r":2},{"i":17,"t":"TM","r":null,"diana":true},{"i":3,"t":"TM","r":3},{"i":8,"t":"BS","r":0}],"solucion":[{"i":14,"t":"L","r":2},{"i":17,"t":"TM","r":2},{"i":3,"t":"TM","r":3},{"i":8,"t":"BS","r":0},{"i":18,"t":"BS","r":0},{"i":19,"t":"DM","r":1}],"rayo":[[4,2,4,3],[4,3,3,3],[3,3,2,3],[3,3,3,2],[3,2,3,1],[3,1,3,0],[3,1,2,1],[2,1,1,1],[1,1,0,1],[0,1,-1,1,"fuera"]],"encendidas":[17,3]},{"objetivos":2,"añadir":["BS","DM"],"fijas":[{"i":18,"t":"L","r":0},{"i":3,"t":"TM","r":3},{"i":12,"t":"BS","r":1},{"i":10,"t":"CP","r":null},{"i":20,"t":"TM","r":2}],"solucion":[{"i":18,"t":"L","r":0},{"i":3,"t":"TM","r":3},{"i":12,"t":"BS","r":1},{"i":10,"t":"CP","r":1},{"i":20,"t":"TM","r":2},{"i":13,"t":"BS","r":0},{"i":22,"t":"DM","r":1}],"rayo":[[3,3,3,2],[3,2,3,1],[3,1,3,0],[3,2,2,2],[2,2,1,2],[1,2,0,2],[0,2,-1,2,"fuera"],[2,2,2,3],[2,3,2,4],[2,4,1,4],[1,4,0,4]],"encendidas":[3,20]},{"objetivos":2,"añadir":["BS","BS"],"fijas":[{"i":5,"t":"L","r":null},{"i":20,"t":"TM","r":null,"diana":true},{"i":15,"t":"CB","r":0},{"i":22,"t":"TM","r":1},{"i":14,"t":"TM","r":3}],"solucion":[{"i":5,"t":"L","r":2},{"i":20,"t":"TM","r":1},{"i":15,"t":"CB","r":0},{"i":22,"t":"TM","r":1},{"i":14,"t":"TM","r":3},{"i":10,"t":"BS","r":0},{"i":12,"t":"BS","r":0}],"rayo":[[0,1,0,2],[0,2,0,3],[0,3,0,4],[0,2,1,2],[1,2,2,2],[2,2,3,2],[3,2,4,2],[4,2,4,1],[4,1,4,0],[4,0,4,-1,"fuera"],[2,2,2,3],[2,3,2,4]],"encendidas":[20,22]},{"objetivos":2,"añadir":["BS","BS"],"fijas":[{"i":11,"t":"L","r":null},{"i":14,"t":"TM","r":2},{"i":24,"t":"CP","r":0},{"i":18,"t":"TM","r":null},{"i":23,"t":"TM","r":1}],"solucion":[{"i":11,"t":"L","r":1},{"i":14,"t":"TM","r":2},{"i":24,"t":"CP","r":0},{"i":18,"t":"TM","r":1},{"i":23,"t":"TM","r":1},{"i":13,"t":"BS","r":0},{"i":19,"t":"BS","r":1}],"rayo":[[1,2,2,2],[2,2,3,2],[3,2,4,2],[4,2,4,3],[4,3,4,4],[4,4,4,5,"fuera"],[4,3,3,3],[3,3,3,4],[3,2,3,3]],"encendidas":[23,18]},{"objetivos":2,"añadir":["BS","BS"],"fijas":[{"i":10,"t":"L","r":0},{"i":0,"t":"DM","r":0},{"i":8,"t":"TM","r":null},{"i":6,"t":"CB","r":0},{"i":22,"t":"TM","r":null,"diana":true}],"solucion":[{"i":10,"t":"L","r":0},{"i":0,"t":"DM","r":0},{"i":8,"t":"TM","r":0},{"i":6,"t":"CB","r":0},{"i":22,"t":"TM","r":1},{"i":5,"t":"BS","r":1},{"i":7,"t":"BS","r":0}],"rayo":[[0,2,0,1],[0,1,0,0],[0,0,-1,0,"fuera"],[0,1,1,1],[1,1,2,1],[2,1,3,1],[2,1,2,2],[2,2,2,3],[2,3,2,4]],"encendidas":[8,22]},{"objetivos":2,"añadir":["TM","BS"],"fijas":[{"i":19,"t":"L","r":0},{"i":9,"t":"TM","r":0},{"i":10,"t":"DM","r":null},{"i":12,"t":"CP","r":null},{"i":5,"t":"BS","r":1}],"solucion":[{"i":19,"t":"L","r":0},{"i":9,"t":"TM","r":0},{"i":10,"t":"DM","r":0},{"i":12,"t":"CP","r":1},{"i":5,"t":"BS","r":1},{"i":14,"t":"BS","r":0},{"i":0,"t":"TM","r":3}],"rayo":[[4,3,4,2],[4,2,4,1],[4,2,3,2],[3,2,2,2],[2,2,1,2],[1,2,0,2],[0,2,0,1],[0,1,0,0],[0,1,1,1],[1,1,2,1],[2,1,3,1],[3,1,4,1]],"encendidas":[0,9]},{"objetivos":2,"añadir":["BS","DM","TM"],"fijas":[{"i":9,"t":"L","r":2},{"i":15,"t":"TM","r":2},{"i":6,"t":"CP","r":null},{"i":11,"t":"CB","r":0}],"solucion":[{"i":9,"t":"L","r":2},{"i":15,"t":"TM","r":2},{"i":6,"t":"CP","r":0},{"i":11,"t":"CB","r":0},{"i":16,"t":"BS","r":0},{"i":19,"t":"DM","r":1},{"i":1,"t":"TM","r":3}],"rayo":[[4,1,4,2],[4,2,4,3],[4,3,3,3],[3,3,2,3],[2,3,1,3],[1,3,0,3],[1,3,1,2],[1,2,1,1],[1,1,1,0]],"encendidas":[15,1]}];
+const NS = 'http://www.w3.org/2000/svg';
+const C = 50;
+const COLOR = { L: '#e1251b', TM: '#7b4fa8', BS: '#2fa84f', DM: '#1f78c8', CP: '#f2c100', CB: '#1d1f24' };
+const NOMBRE = { L: 'Láser', TM: 'Objetivo/espejo', BS: 'Divisor de haz', DM: 'Doble espejo', CP: 'Checkpoint', CB: 'Bloqueador' };
+
+function svgEl(tag, a, padre) { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); if (padre) padre.appendChild(e); return e; }
+
+/** Ficha centrada en (0,0) con lado s. r = orientación 0..3 (0 = mirando al norte) o null = '?' */
+function ficha(t, r, s, opts = {}) {
+  const h = s / 2 - 3, g = svgEl('g', {});
+  if (t === 'CB') { svgEl('rect', { x: -h, y: -h, width: 2 * h, height: 2 * h, rx: 5, fill: COLOR.CB, stroke: '#6b7385', 'stroke-width': 2 }, g); return g; }
+  svgEl('rect', { x: -h, y: -h, width: 2 * h, height: 2 * h, rx: 6, fill: '#f7f7f8', stroke: COLOR[t], 'stroke-width': s * .1 }, g);
+  const q = h - s * .1;
+  if (r == null) {
+    if (t === 'TM' && opts.diana) svgEl('circle', { r: s * .2, fill: 'none', stroke: '#e1251b', 'stroke-width': s * .07 }, g);
+    svgEl('text', { 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': s * .48, 'font-weight': 900,
+      'font-family': 'Inter, sans-serif', fill: t === 'CP' ? '#b38f00' : COLOR[t] }, g).textContent = '?';
+    return g;
+  }
+  const o = svgEl('g', { transform: `rotate(${90 * r})` }, g);
+  if (t === 'L') {
+    svgEl('rect', { x: -q * .62, y: -q * .55, width: q * 1.24, height: q * 1.4, rx: 6, fill: '#3a3f48' }, o);
+    svgEl('path', { d: `M 0 ${-q} L ${q * .45} ${-q * .35} L ${-q * .45} ${-q * .35} Z`, fill: '#e1251b' }, o);
+    svgEl('circle', { cy: q * .3, r: q * .2, fill: '#e1251b' }, o);
+  } else if (t === 'TM') {
+    // mitad cerrada abajo-izquierda, espejo en la diagonal, diana roja en la cara oeste
+    svgEl('path', { d: `M ${-q} ${-q} L ${q} ${q} L ${-q} ${q} Z`, fill: '#cfc6dc' }, o);
+    svgEl('line', { x1: -q, y1: -q, x2: q, y2: q, stroke: '#9aa3ad', 'stroke-width': s * .1, 'stroke-linecap': 'round' }, o);
+    svgEl('line', { x1: -q, y1: -q * .8, x2: -q, y2: q * .8, stroke: '#e1251b', 'stroke-width': s * .13, 'stroke-linecap': 'round' }, o);
+    svgEl('circle', { cx: -q * .45, cy: q * .45, r: s * .08, fill: '#e1251b' }, o);
+    if (opts.encendida) {
+      const on = svgEl('circle', { class: 'diana-on', cx: -q * .45, cy: q * .45, r: s * .17, fill: 'rgba(255,60,40,.55)', stroke: '#ffd2cc', 'stroke-width': 2 }, o);
+      on.style.setProperty('--n', opts.n || 0);
+    }
+  } else if (t === 'DM') {
+    svgEl('line', { x1: -q, y1: -q, x2: q, y2: q, stroke: '#9aa3ad', 'stroke-width': s * .16, 'stroke-linecap': 'round' }, o);
+    svgEl('line', { x1: -q, y1: -q, x2: q, y2: q, stroke: '#e8edf2', 'stroke-width': s * .05, 'stroke-linecap': 'round' }, o);
+  } else if (t === 'BS') {
+    svgEl('line', { x1: -q, y1: -q, x2: q, y2: q, stroke: '#7fd39a', 'stroke-width': s * .14, 'stroke-linecap': 'round', opacity: .9 }, o);
+    svgEl('line', { x1: -q, y1: -q, x2: q, y2: q, stroke: '#2fa84f', 'stroke-width': s * .04, 'stroke-dasharray': '3 3' }, o);
+  } else if (t === 'CP') {
+    // el rayo lo atraviesa de norte a sur: paredes a los lados
+    svgEl('rect', { x: -q, y: -q, width: q * .45, height: 2 * q, rx: 3, fill: COLOR.CP }, o);
+    svgEl('rect', { x: q * .55, y: -q, width: q * .45, height: 2 * q, rx: 3, fill: COLOR.CP }, o);
+  }
+  return g;
+}
+
+function tablero(fichas, opts = {}) {
+  const m = 6, W = C * 5 + 2 * m;
+  const svg = svgEl('svg', { class: 'tablero', width: W, height: W, viewBox: `0 0 ${W} ${W}` });
+  svgEl('rect', { class: 'fondo', x: 0, y: 0, width: W, height: W, rx: 12, fill: '#cfd3d8' }, svg);
+  for (let y = 0; y < 5; y++) for (let x = 0; x < 5; x++)
+    svgEl('rect', { x: m + x * C + 2, y: m + y * C + 2, width: C - 4, height: C - 4, rx: 6,
+      fill: opts.oscuro ? '#262d39' : '#f1f2f4', stroke: opts.oscuro ? '#323b4a' : '#c3c8ce' }, svg);
+  const cx = i => m + (i % 5) * C + C / 2, cy = i => m + Math.floor(i / 5) * C + C / 2;
+  // orden en que el rayo llega a cada objetivo (para encenderlos a su tiempo)
+  const llegada = {};
+  if (opts.rayo) opts.rayo.forEach(([, , nx, ny], k) => { const i = ny * 5 + nx; if (!(i in llegada)) llegada[i] = k; });
+  for (const f of fichas) {
+    const g = ficha(f.t, f.r, C, { diana: f.diana, encendida: opts.encendidas && opts.encendidas.includes(f.i), n: llegada[f.i] || 0 });
+    g.setAttribute('transform', `translate(${cx(f.i)},${cy(f.i)})`);
+    svg.appendChild(g);
+  }
+  if (opts.rayo) {
+    const capa = svgEl('g', { class: 'rayo', 'stroke-linecap': 'round' }, svg);
+    opts.rayo.forEach(([x, y, nx, ny, fuera], k) => {
+      const x1 = m + x * C + C / 2, y1 = m + y * C + C / 2;
+      let x2 = m + nx * C + C / 2, y2 = m + ny * C + C / 2;
+      if (fuera) { x2 = x1 + (x2 - x1) * .55; y2 = y1 + (y2 - y1) * .55; }
+      for (const [col, w] of [['rgba(255,40,30,.28)', 10], ['#ff2a1f', 2.8]]) {
+        const l = svgEl('line', { x1, y1, x2, y2, stroke: col, 'stroke-width': w, pathLength: 1 }, capa);
+        l.style.setProperty('--n', k);
+      }
+    });
+  }
+  return svg;
+}
+
+function icono(t) {
+  const s = 30, svg = svgEl('svg', { width: s, height: s, viewBox: `${-s / 2} ${-s / 2} ${s} ${s}` });
+  svg.appendChild(ficha(t, 0, s));
+  svgEl('title', {}, svg).textContent = NOMBRE[t];
+  return svg;
+}
+
+// Progreso (solo en este navegador)
+let hechos = new Set();
+try { hechos = new Set(JSON.parse(localStorage.getItem('lasermaze.hechos') || '[]')); } catch {}
+const guarda = () => { try { localStorage.setItem('lasermaze.hechos', JSON.stringify([...hechos])); } catch {} ; document.getElementById('nHechos').textContent = hechos.size; };
+
+function carta(r, n) {
+  const c = document.createElement('article');
+  c.className = 'carta' + (hechos.has(n) ? ' hecha' : '');
+  c.innerHTML = `<div class="interior">
+    <div class="cara delantera"><div class="cab"><div><div class="marca">LASER MAZE</div><div class="nivel">NIVEL MEDIO</div></div><div class="num">${n}</div></div></div>
+    <div class="cara trasera"><div class="cab"><div><div class="marca">LASER MAZE</div><div class="nivel">SOLUCIÓN</div></div><div class="num">${n}</div></div></div>
+  </div>`;
+  const [del, tra] = c.querySelectorAll('.cara');
+  del.appendChild(tablero(r.fijas));
+  const pie = document.createElement('div'); pie.className = 'pie';
+  const a = document.createElement('div'); a.className = 'caja';
+  a.innerHTML = '<div class="tit">AÑADIR AL TABLERO</div>';
+  const fs = document.createElement('div'); fs.className = 'fichas';
+  for (const t of r.añadir) fs.appendChild(icono(t));
+  a.appendChild(fs);
+  const o = document.createElement('div'); o.className = 'caja obj';
+  o.innerHTML = `<div class="tit">Nº OBJETIVOS</div><b>${r.objetivos}</b>`;
+  pie.append(a, o); del.appendChild(pie);
+  const acc = document.createElement('div'); acc.className = 'acciones';
+  acc.innerHTML = '<button class="hecho">✓ ¡Lo tengo!</button><button class="ver">Ver solución ↻</button>';
+  del.appendChild(acc);
+
+  tra.appendChild(tablero(r.solucion, { rayo: r.rayo, encendidas: r.encendidas, oscuro: true }));
+  const nota = document.createElement('p'); nota.className = 'nota';
+  nota.textContent = `El rayo enciende ${r.encendidas.length} objetivo${r.encendidas.length > 1 ? 's' : ''} y toca todas las fichas.`;
+  tra.appendChild(nota);
+  const acc2 = document.createElement('div'); acc2.className = 'acciones';
+  acc2.innerHTML = '<button class="volver">↺ Volver al reto</button>';
+  tra.appendChild(acc2);
+
+  acc.querySelector('.ver').onclick = () => c.classList.add('girada');
+  acc2.querySelector('.volver').onclick = () => c.classList.remove('girada');
+  acc.querySelector('.hecho').onclick = () => {
+    if (hechos.has(n)) hechos.delete(n); else hechos.add(n);
+    c.classList.toggle('hecha', hechos.has(n)); guarda();
+  };
+  return c;
+}
+
+// Leyenda de piezas
+const piezas = document.getElementById('piezas');
+[
+  ['L', 'Láser', 'dispara el rayo hacia donde apunta el triángulo rojo.'],
+  ['TM', 'Objetivo/espejo', 'la cara roja es la diana y se enciende; la diagonal es un espejo para los rayos que llegan por el lado abierto; la otra cara recta bloquea.'],
+  ['BS', 'Divisor de haz', 'parte el rayo en dos: una mitad sigue recta y la otra gira 90°.'],
+  ['DM', 'Doble espejo', 'refleja 90° por sus dos caras.'],
+  ['CP', 'Checkpoint', 'el rayo tiene que atravesarlo, y solo puede hacerlo en la dirección de su hueco.'],
+  ['CB', 'Bloqueador', 'ocupa la casilla para que no pongas nada en ella, pero el rayo pasa por encima.'],
+].forEach(([t, nom, txt]) => {
+  const d = document.createElement('div'); d.className = 'pieza';
+  const s = 46, svg = svgEl('svg', { width: s, height: s, viewBox: `${-s / 2} ${-s / 2} ${s} ${s}` });
+  svg.appendChild(ficha(t, 0, s)); d.appendChild(svg);
+  const p = document.createElement('div'); p.innerHTML = `<b>${nom}:</b> ${txt}`; d.appendChild(p);
+  piezas.appendChild(d);
+});
+
+const main = document.getElementById('cartas');
+RETOS.forEach((r, k) => main.appendChild(carta(r, k + 1)));
+document.getElementById('nRetos').textContent = RETOS.length;
+guarda();
+
+document.getElementById('btnSol').onclick = e => {
+  const oculto = document.body.classList.toggle('oculta-sol');
+  if (oculto) document.querySelectorAll('.carta.girada').forEach(c => c.classList.remove('girada'));
+  e.target.textContent = oculto ? '👀 Mostrar soluciones' : '🙈 Ocultar soluciones';
+};
+document.getElementById('btnGirar').onclick = () => document.querySelectorAll('.carta.girada').forEach(c => c.classList.remove('girada'));
+</script>
+</body>
+</html>
